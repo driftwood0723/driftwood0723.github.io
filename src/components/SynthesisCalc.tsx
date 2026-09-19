@@ -21,10 +21,12 @@ function describeRecipe(tier: { level: number; fromLower: number; extra: Record<
   return { main, ex };
 }
 
+/** 非受控输入：由浏览器管内容，React 只读值。
+    受控写法会在「数值相等但字符串不同」时不刷新 DOM，留下 "010" 这种前导零。 */
 function Num({
-  label, value, onChange, min = 0, max, step = 1, hint,
+  label, defaultValue, onChange, min = 0, max, step = 1, hint,
 }: {
-  label: string; value: number; onChange: (v: number) => void;
+  label: string; defaultValue: number; onChange: (v: number) => void;
   min?: number; max?: number; step?: number; hint?: string;
 }) {
   return (
@@ -35,13 +37,14 @@ function Num({
       </span>
       <input
         type="number"
-        value={value}
+        defaultValue={defaultValue}
         min={min}
         max={max}
         step={step}
         onChange={(e) => {
           const n = Number(e.target.value);
-          onChange(Number.isFinite(n) ? Math.max(min, max ? Math.min(max, n) : n) : min);
+          if (e.target.value === '' || !Number.isFinite(n)) return;
+          onChange(Math.max(min, max !== undefined ? Math.min(max, n) : n));
         }}
       />
     </label>
@@ -93,19 +96,20 @@ export default function SynthesisCalc() {
       {/* ── 参数 ── */}
       <div className="grid">
         <Num
-          label="目标等级" value={level} onChange={setTargetLevel}
+          key={`lv-${chain.id}`}
+          label="目标等级" defaultValue={level} onChange={setTargetLevel}
           min={1} max={chain.maxLevel} hint={`最高 ${chain.maxLevel}`}
         />
         <Num
-          label="1 级单价" value={unitPriceWan} onChange={setUnitPriceWan}
+          label="1 级单价" defaultValue={unitPriceWan} onChange={setUnitPriceWan}
           step={0.1} hint="万"
         />
         <Num
-          label="体力单价" value={staminaPrice} onChange={setStaminaPrice}
+          label="体力单价" defaultValue={staminaPrice} onChange={setStaminaPrice}
           step={100} hint="梦幻币/点"
         />
         <Num
-          label="汇率" value={cnyPer30M} onChange={setCnyPer30M}
+          label="汇率" defaultValue={cnyPer30M} onChange={setCnyPer30M}
           step={10} hint="元 / 3000万"
         />
       </div>
