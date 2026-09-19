@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { site, nav } from '../site';
+import ThemePicker from '../components/ThemePicker.astro';
 
 interface Props {
   title?: string;
@@ -17,7 +18,7 @@ const path = Astro.url.pathname;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#08070f" />
+    <meta name="theme-color" content="#fcfcfb" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
@@ -53,6 +54,8 @@ const path = Astro.url.pathname;
       <slot />
     </main>
 
+    <ThemePicker />
+
     <footer>
       <span>© {new Date().getFullYear()} {site.author}</span>
       {site.github && <a href={`https://github.com/${site.github}`}>GitHub</a>}
@@ -62,8 +65,8 @@ const path = Astro.url.pathname;
       header {
         position: sticky; top: 0; z-index: 20;
         border-bottom: 1px solid var(--border);
-        background: rgba(8, 7, 15, 0.6);
-        backdrop-filter: blur(16px) saturate(140%);
+        background: rgba(252, 252, 251, 0.72);
+        backdrop-filter: blur(16px) saturate(180%);
       }
       nav {
         max-width: var(--measure); margin: 0 auto;

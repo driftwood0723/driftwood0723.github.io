@@ -87,7 +87,7 @@ export default function TimestampTool() {
         .tool { display: flex; flex-direction: column; gap: 1.1rem; margin-top: 1.5rem; }
         .row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
                padding: 1rem 1.15rem; background: var(--surface-solid);
-               backdrop-filter: blur(20px);
+               box-shadow: var(--shadow-sm);
                border: 1px solid var(--border); border-radius: var(--radius-lg); }
         .label { font-size: 0.85rem; color: var(--text-muted); }
         .value { font-size: 1rem; }
@@ -96,20 +96,20 @@ export default function TimestampTool() {
         .hint { font-size: 0.8rem; opacity: 0.7; }
         input { font-family: var(--mono); font-size: 0.95rem; padding: 0.7rem 0.85rem;
                 border: 1px solid var(--border); border-radius: var(--radius);
-                background: rgba(0,0,0,0.3); color: var(--text); width: 100%;
+                background: var(--surface-solid); color: var(--text); width: 100%;
                 transition: border-color .18s, box-shadow .18s; }
         input:hover { border-color: var(--border-strong); }
         input:focus { outline: none; border-color: var(--accent);
-                      box-shadow: 0 0 0 3px rgba(167,139,250,0.18), 0 0 20px rgba(167,139,250,0.15); }
+                      box-shadow: 0 0 0 3px rgba(109,74,255,0.13); }
         button { font-size: 0.8rem; padding: 0.35rem 0.7rem; cursor: pointer;
                  border: 1px solid var(--border); border-radius: 8px;
-                 background: rgba(255,255,255,0.05); color: var(--text-muted);
+                 background: var(--bg-soft); color: var(--text-muted);
                  transition: .18s; }
         button:hover { border-color: var(--accent); color: var(--accent);
-                       box-shadow: 0 0 16px rgba(167,139,250,0.25); }
+                       background: var(--surface-solid); box-shadow: var(--shadow-sm); }
         output { display: flex; flex-direction: column; gap: 0.4rem;
                  font-size: 0.9rem; padding: 0.85rem 1.1rem; margin-top: -0.5rem;
-                 background: var(--surface-solid); backdrop-filter: blur(16px);
+                 background: var(--bg-soft);
                  border: 1px solid var(--border);
                  border-radius: var(--radius); white-space: pre;
                  animation: rise .35s var(--ease) both; }

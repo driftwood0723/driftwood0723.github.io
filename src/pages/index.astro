@@ -132,23 +132,30 @@ const fmt = (d: Date) =>
       transition: transform 0.22s var(--ease), box-shadow 0.22s, border-color 0.22s;
     }
     .btn-primary {
-      color: #0b0916;
-      background: linear-gradient(110deg, #c4b5fd, #a5b4fc 45%, #7dd3fc);
-      box-shadow: 0 6px 24px rgba(167, 139, 250, 0.3);
+      color: #fff;
+      background: var(--grad);
+      background-size: 160% auto;
+      box-shadow: 0 4px 14px rgba(70, 50, 190, 0.22);
     }
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 34px rgba(167, 139, 250, 0.45);
+      background-position: 100% center;
+      box-shadow: 0 8px 26px rgba(70, 50, 190, 0.32);
     }
     .btn-primary .ar { transition: transform 0.22s var(--ease); }
+    .btn-primary, .btn-primary:hover { color: #fff; }
     .btn-primary:hover .ar { transform: translateX(4px); }
     .btn-ghost {
       color: var(--text);
-      background: var(--surface);
+      background: var(--surface-solid);
       border: 1px solid var(--border);
-      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-sm);
     }
-    .btn-ghost:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+    .btn-ghost:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
 
     .entries {
       display: grid; gap: 1.1rem; grid-template-columns: 1fr;
