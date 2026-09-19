@@ -1,13 +1,12 @@
 /** 站点全局配置 —— 改这里就行，其他页面都从这儿读 */
 export const site = {
-  title: '我的站点',
+  title: '浮木',
   // 首页大标题下的一句话
   tagline: '写点东西，顺手做些小工具。',
-  author: '你的名字',
+  author: '浮木',
   email: '',
-  github: '',
-  // 部署到 GitHub Pages 时填 'https://<用户名>.github.io'
-  url: 'https://example.com',
+  github: 'driftwood0723',
+  url: 'https://driftwood0723.github.io',
 } as const;
 
 export const nav = [
