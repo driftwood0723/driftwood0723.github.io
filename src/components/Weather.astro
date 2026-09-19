@@ -1,33 +1,18 @@
 ---
-/* 背景天气（Canvas 2D 粒子，每次会话随机：无 / 雨 / 雪）
-   + 与天气匹配的环境音（Web Audio 实时合成，默认关闭） */
+/* 背景天气：Canvas 2D 粒子，每次加载随机（无 / 雨 / 雪）
+   近处雪花画六角形，远处画圆点；雨为斜线并随风偏移 */
 ---
 
 <canvas id="weather" aria-hidden="true"></canvas>
 
-<button id="sound" class="sound" aria-pressed="false" title="环境音">
-  <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
-       stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-    <path d="M4 9v6h4l5 4V5L8 9H4z" />
-    <path class="wave1" d="M16.5 8.5a5 5 0 0 1 0 7" />
-    <path class="wave2" d="M19 6a8.5 8.5 0 0 1 0 12" />
-    <path class="slash" d="M3 3l18 18" stroke-width="1.6" />
-  </svg>
-</button>
-
 <script>
   type Active = 'off' | 'rain' | 'snow';
 
-  const SOUND = 'weather-sound';
-
   const canvas = document.getElementById('weather') as HTMLCanvasElement;
   const ctx = canvas.getContext('2d')!;
-  const btn = document.getElementById('sound') as HTMLButtonElement;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ── 天气：每次加载重新随机 ── */
   const active: Active = (['off', 'rain', 'snow'] as const)[Math.floor(Math.random() * 3)];
-  sessionStorage.removeItem('weather-roll');   // 清掉旧版遗留的键
 
   let raf = 0;
   let w = 0, h = 0, dpr = 1;
@@ -140,139 +125,26 @@
     raf = requestAnimationFrame(frame);
   }
 
-  function startDraw() {
+  function start() {
     if (raf || active === 'off' || reduced) return;
     last = performance.now();
     raf = requestAnimationFrame(frame);
   }
-  function stopDraw() { cancelAnimationFrame(raf); raf = 0; }
+  function stop() { cancelAnimationFrame(raf); raf = 0; }
 
-  /* ── 环境音：滤波噪声实时合成，无音频文件 ── */
-  const VOL: Record<Active, number> = { off: 0.018, rain: 0.035, snow: 0.022 };
-
-  let ac: AudioContext | null = null;
-  let master: GainNode | null = null;
-  let on = false;
-
-  function noiseBuffer(c: AudioContext, sec: number) {
-    const buf = c.createBuffer(1, c.sampleRate * sec, c.sampleRate);
-    const d = buf.getChannelData(0);
-    // 粉噪声（Voss 近似）—— 比纯白噪声柔和，不刺耳
-    let b0 = 0, b1 = 0, b2 = 0;
-    for (let i = 0; i < d.length; i++) {
-      const white = Math.random() * 2 - 1;
-      b0 = 0.99765 * b0 + white * 0.099046;
-      b1 = 0.963 * b1 + white * 0.2965164;
-      b2 = 0.57 * b2 + white * 1.0526913;
-      d[i] = (b0 + b1 + b2 + white * 0.1848) * 0.12;
-    }
-    return buf;
-  }
-
-  function buildAudio() {
-    ac = new AudioContext();
-    const src = ac.createBufferSource();
-    src.buffer = noiseBuffer(ac, 6);
-    src.loop = true;
-
-    const hp = ac.createBiquadFilter();
-    const lp = ac.createBiquadFilter();
-    hp.type = 'highpass';
-    lp.type = 'lowpass';
-
-    if (active === 'rain') {
-      hp.frequency.value = 420; lp.frequency.value = 5200;   // 沙沙的雨
-    } else if (active === 'snow') {
-      hp.frequency.value = 90;  lp.frequency.value = 700;    // 低沉的风
-    } else {
-      hp.frequency.value = 60;  lp.frequency.value = 380;    // 极轻的环境底噪
-    }
-
-    // 缓慢起伏，避免听起来像一条死噪声
-    const lfo = ac.createOscillator();
-    const lfoGain = ac.createGain();
-    lfo.frequency.value = active === 'rain' ? 0.08 : 0.05;
-    lfoGain.gain.value = active === 'rain' ? 0.3 : 0.45;
-
-    const swell = ac.createGain();
-    swell.gain.value = 0.7;
-    lfo.connect(lfoGain).connect(swell.gain);
-
-    master = ac.createGain();
-    master.gain.value = 0;
-
-    src.connect(hp).connect(lp).connect(swell).connect(master).connect(ac.destination);
-    src.start();
-    lfo.start();
-  }
-
-  function fade(to: number, sec = 1.4) {
-    if (!ac || !master) return;
-    const t = ac.currentTime;
-    master.gain.cancelScheduledValues(t);
-    master.gain.setValueAtTime(master.gain.value, t);
-    master.gain.linearRampToValueAtTime(to, t + sec);
-  }
-
-  async function setSound(next: boolean) {
-    on = next;
-    btn.setAttribute('aria-pressed', String(on));
-    btn.classList.toggle('on', on);
-    localStorage.setItem(SOUND, on ? '1' : '0');
-
-    if (on) {
-      if (!ac) buildAudio();
-      await ac!.resume();
-      fade(VOL[active]);
-    } else {
-      fade(0, 0.6);
-    }
-  }
-
-  btn.addEventListener('click', () => setSound(!on));
-
-  // 浏览器要求先有交互才能出声：记住了「开」也要等首次点击/按键
-  if (localStorage.getItem(SOUND) === '1') {
-    const resume = () => {
-      setSound(true);
-      removeEventListener('pointerdown', resume);
-      removeEventListener('keydown', resume);
-    };
-    addEventListener('pointerdown', resume, { once: true });
-    addEventListener('keydown', resume, { once: true });
-    btn.classList.add('pending');
-  }
-
+  // 标签页不可见时停掉，别空烧 CPU
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { stopDraw(); if (on) fade(0, 0.4); }
-    else { startDraw(); if (on) fade(VOL[active]); }
+    if (document.hidden) stop(); else start();
   });
 
   let rt: number;
   addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 150); });
 
   resize();
-  if (active !== 'off') { spawn(); startDraw(); }
+  if (active !== 'off') { spawn(); start(); }
 </script>
 
 <style>
   #weather { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-
-  .sound {
-    position: fixed; right: 1rem; bottom: 1rem; z-index: 30;
-    width: 34px; height: 34px; display: grid; place-items: center;
-    padding: 0; cursor: pointer;
-    background: #fff; color: var(--text-dim);
-    border: 1px solid var(--border); border-radius: 50%;
-    transition: color .15s, border-color .15s;
-  }
-  .sound:hover { color: var(--text); border-color: var(--text-dim); }
-  .sound.on { color: var(--text); }
-
-  /* 关闭态：斜杠可见、声波隐藏 */
-  .sound .wave1, .sound .wave2 { opacity: 0; transition: opacity .2s; }
-  .sound .slash { opacity: 1; transition: opacity .2s; }
-  .sound.on .wave1, .sound.on .wave2 { opacity: 1; }
-  .sound.on .slash { opacity: 0; }
-  .sound.pending { opacity: 0.55; }
+  @media (prefers-reduced-motion: reduce) { #weather { display: none; } }
 </style>
