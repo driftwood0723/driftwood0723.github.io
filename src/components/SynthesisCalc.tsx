@@ -13,6 +13,14 @@ function describeExtra(extra: Record<number, number>): string {
     .join('、');
 }
 
+/** 完整配方：主料（N 颗低一级）+ 必定成功要求的附加 */
+function describeRecipe(tier: { level: number; fromLower: number; extra: Record<number, number> }) {
+  if (tier.fromLower === 0) return null;          // 1 级是底层，合不出来
+  const main = `${tier.fromLower}×${tier.level - 1}级`;
+  const ex = describeExtra(tier.extra);
+  return { main, ex };
+}
+
 function Num({
   label, value, onChange, min = 0, max, step = 1, hint,
 }: {
@@ -169,7 +177,7 @@ export default function SynthesisCalc() {
       <p className="tip">
         每一级的需求有两个来源：被高一级<b>当原料</b>吃掉（2 颗合 1 颗），
         或被某个更高级的「必定成功」合成<b>当附加</b>点名索要。
-        最后一列是反过来的 —— 合成这一级时你要另外交出去的东西。
+        最后一列是这一级自己怎么合出来的：<b>粗体是主料</b>，后面是附加。
       </p>
       <div className="tablewrap">
         <table>
@@ -181,13 +189,13 @@ export default function SynthesisCalc() {
               <th className="n sub">其中·当附加</th>
               <th className="n">需合成</th>
               <th className="n">体力</th>
-              <th>合成时另需</th>
+              <th>合成配方</th>
             </tr>
           </thead>
           <tbody>
             {result.rows.map((r) => {
               const tier = chain.tiers[r.level - 1];
-              const ex = describeExtra(tier.extra);
+              const recipe = describeRecipe(tier);
               return (
                 <tr key={r.level} className={r.shortfall > 0 ? 'base' : undefined}>
                   <td><b>{r.level} 级</b></td>
@@ -200,7 +208,16 @@ export default function SynthesisCalc() {
                       : formatCount(r.toSynthesize)}
                   </td>
                   <td className="n dim">{r.stamina ? formatCount(r.stamina) : '—'}</td>
-                  <td className="dim sm">{ex || '—'}</td>
+                  <td className="sm recipe">
+                    {recipe ? (
+                      <>
+                        <b>{recipe.main}</b>
+                        {recipe.ex && <span className="plus"> + {recipe.ex}</span>}
+                      </>
+                    ) : (
+                      <span className="dim">底层，需自备</span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
@@ -308,6 +325,9 @@ export default function SynthesisCalc() {
         th.n { text-align: right; }
         .dim { color: var(--text-dim); }
         .sm { font-size: 0.78rem; }
+        .recipe b { font-weight: 550; color: var(--text); }
+        .recipe .plus { color: var(--text-dim); }
+
         .tagbase {
           font-size: 0.74rem; padding: 0.1rem 0.4rem; border-radius: 5px;
           background: var(--text); color: #fff;
