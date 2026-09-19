@@ -65,14 +65,6 @@ export default function SynthesisCalc() {
     [chain, level, unitPrice, staminaPrice, cnyPer30M]
   );
 
-  // 理论下界要逐级连乘（钟灵石各级倍率不同），不能一律 2^(n-1)
-  const naiveBase = useMemo(() => {
-    let n = 1;
-    for (let l = level; l >= 2; l--) n *= chain.tiers[l - 1].fromLower;
-    return n;
-  }, [chain, level]);
-  const overhead = result.baseNeeded - naiveBase;
-
   return (
     <div className="calc">
       {/* ── 材料 ── */}
@@ -164,20 +156,11 @@ export default function SynthesisCalc() {
         )}
       </div>
 
-      {/* ── 额外提交带来的溢出 ── */}
-      {overhead > 0 && (
-        <p className="note">
-          纯翻倍只需 <b>{formatCount(naiveBase)}</b> {chain.unit}，
-          「必定成功」要求的额外提交多吃了 <b>{formatCount(overhead)}</b> {chain.unit}
-          （多 {((overhead / naiveBase) * 100).toFixed(1)}%）。
-        </p>
-      )}
-
       {/* ── 明细 ── */}
       <p className="tip">
-        每一级的需求有两个来源：被高一级<b>当原料</b>吃掉（2 颗合 1 颗），
-        或被某个更高级的「必定成功」合成<b>当附加</b>点名索要。
-        最后一列是这一级自己怎么合出来的：<b>粗体是主料</b>，后面是附加。
+        「需要」拆成两列：被高一级<b>当原料</b>吃掉，或被更高级的「必定成功」
+        合成<b>当附加</b>索要 —— 只有目标那一行例外，它那一个就是你自己要的。
+        最后一列则是反过来看：这一级自己怎么合出来，<b>粗体是主料</b>。
       </p>
       <div className="tablewrap">
         <table>
@@ -199,7 +182,10 @@ export default function SynthesisCalc() {
               return (
                 <tr key={r.level} className={r.shortfall > 0 ? 'base' : undefined}>
                   <td><b>{r.level} 级</b></td>
-                  <td className="n">{formatCount(r.needed)}</td>
+                  <td className="n">
+                    {formatCount(r.needed)}
+                    {r.level === level && <em className="tgt">目标</em>}
+                  </td>
                   <td className="n dim">{r.asMaterial ? formatCount(r.asMaterial) : '—'}</td>
                   <td className="n dim">{r.asExtra ? formatCount(r.asExtra) : '—'}</td>
                   <td className="n">
@@ -302,11 +288,6 @@ export default function SynthesisCalc() {
         .cost-row.total b { font-size: 1.05rem; }
         .cost-row.cny b { color: var(--accent); }
 
-        .note { margin: 0; font-size: 0.85rem; color: var(--text-muted);
-                padding: 0.7rem 0.9rem; background: var(--bg-soft);
-                border-left: 2px solid var(--accent); border-radius: 0 8px 8px 0; }
-        .note b { color: var(--text); font-variant-numeric: tabular-nums; }
-
         .tip { margin: 0; font-size: 0.82rem; color: var(--text-muted); line-height: 1.7; }
         .tip b { color: var(--text); font-weight: 550; }
         thead th.sub { color: var(--text-dim); font-weight: 400; }
@@ -325,6 +306,12 @@ export default function SynthesisCalc() {
         th.n { text-align: right; }
         .dim { color: var(--text-dim); }
         .sm { font-size: 0.78rem; }
+        .tgt {
+          font-style: normal; font-size: 0.68rem; font-weight: 400;
+          margin-left: 0.4rem; padding: 0.08rem 0.32rem; border-radius: 4px;
+          background: var(--text); color: #fff; vertical-align: 1px;
+        }
+
         .recipe b { font-weight: 550; color: var(--text); }
         .recipe .plus { color: var(--text-dim); }
 
