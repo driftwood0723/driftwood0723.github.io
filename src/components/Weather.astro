@@ -1,75 +1,98 @@
 ---
-/* 背景天气：Canvas 2D 粒子 + 景深分层（近大快、远小淡）
-   切换器是临时的，定下来后可删，把默认 mode 写死即可 */
+/* 背景天气（Canvas 2D 粒子，每次会话随机：无 / 雨 / 雪）
+   + 与天气匹配的环境音（Web Audio 实时合成，默认关闭） */
 ---
 
 <canvas id="weather" aria-hidden="true"></canvas>
 
-<div class="wswitch" role="group" aria-label="背景天气">
-  <button data-mode="off">无</button>
-  <button data-mode="rain">雨</button>
-  <button data-mode="snow">雪</button>
-</div>
+<button id="sound" class="sound" aria-pressed="false" title="环境音">
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
+       stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <path d="M4 9v6h4l5 4V5L8 9H4z" />
+    <path class="wave1" d="M16.5 8.5a5 5 0 0 1 0 7" />
+    <path class="wave2" d="M19 6a8.5 8.5 0 0 1 0 12" />
+    <path class="slash" d="M3 3l18 18" stroke-width="1.6" />
+  </svg>
+</button>
 
 <script>
-  type Mode = 'off' | 'rain' | 'snow';
+  type Active = 'off' | 'rain' | 'snow';
 
-  const KEY = 'weather-mode';
+  const SOUND = 'weather-sound';
+
   const canvas = document.getElementById('weather') as HTMLCanvasElement;
   const ctx = canvas.getContext('2d')!;
+  const btn = document.getElementById('sound') as HTMLButtonElement;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  let mode: Mode = 'off';
+  /* ── 天气：每次加载重新随机 ── */
+  const active: Active = (['off', 'rain', 'snow'] as const)[Math.floor(Math.random() * 3)];
+  sessionStorage.removeItem('weather-roll');   // 清掉旧版遗留的键
+
   let raf = 0;
   let w = 0, h = 0, dpr = 1;
-  let wind = 0;          // 风向缓慢漂移
+  let wind = 0;
   let particles: Particle[] = [];
 
   interface Particle {
-    x: number; y: number;
-    z: number;            // 深度 0(远)..1(近)
-    v: number;            // 下落速度
-    len: number;          // 雨：线长 / 雪：半径
-    phase: number;        // 雪的摆动相位
-    sway: number;         // 雪的摆动幅度
+    x: number; y: number; z: number;
+    v: number; len: number;
+    phase: number; sway: number;
+    rot: number; spin: number;
   }
 
   function resize() {
     dpr = Math.min(devicePixelRatio || 1, 2);
     w = innerWidth; h = innerHeight;
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (mode !== 'off') spawn();
+    if (active !== 'off') spawn();
   }
 
   function count() {
     const area = w * h;
-    const base = mode === 'rain' ? 12000 : 18000;
-    return Math.min(Math.round(area / base), mode === 'rain' ? 220 : 160);
+    return active === 'rain'
+      ? Math.min(Math.round(area / 12000), 220)
+      : Math.min(Math.round(area / 13000), 190);
   }
 
   function make(initial: boolean): Particle {
     const z = Math.random();
     return {
       x: Math.random() * w,
-      y: initial ? Math.random() * h : -20 - Math.random() * 80,
+      y: initial ? Math.random() * h : -30 - Math.random() * 80,
       z,
-      v: mode === 'rain'
-        ? 520 + z * 780              // 雨速快，近处更快
-        : 22 + z * 48,               // 雪缓慢
-      len: mode === 'rain'
-        ? 9 + z * 20                 // 线长
-        : 0.8 + z * 2.2,             // 半径
+      v: active === 'rain' ? 520 + z * 780 : 20 + z * 46,
+      len: active === 'rain' ? 9 + z * 20 : 1.6 + z * 5.4,
       phase: Math.random() * Math.PI * 2,
-      sway: 14 + Math.random() * 26,
+      sway: 14 + Math.random() * 28,
+      rot: Math.random() * Math.PI,
+      spin: (Math.random() - 0.5) * 0.8,
     };
   }
 
   function spawn() {
     particles = Array.from({ length: count() }, () => make(true));
+  }
+
+  /** 六角雪花：主枝 + 两条小分枝 ×6 */
+  function flake(x: number, y: number, r: number, rot: number, a: number, lw: number) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.strokeStyle = `rgba(116,142,180,${a})`;
+    ctx.lineWidth = lw;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      ctx.rotate(Math.PI / 3);
+      ctx.moveTo(0, 0); ctx.lineTo(0, -r);
+      ctx.moveTo(0, -r * 0.58); ctx.lineTo(r * 0.3, -r * 0.84);
+      ctx.moveTo(0, -r * 0.58); ctx.lineTo(-r * 0.3, -r * 0.84);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
 
   let last = performance.now();
@@ -80,14 +103,13 @@
 
     ctx.clearRect(0, 0, w, h);
     wind += dt * 0.12;
-    const gust = Math.sin(wind) * (mode === 'rain' ? 0.35 : 0.5);
+    const gust = Math.sin(wind) * (active === 'rain' ? 0.35 : 0.5);
 
     for (const p of particles) {
-      if (mode === 'rain') {
+      if (active === 'rain') {
         const dx = gust * p.v * 0.22;
         p.x += dx * dt;
         p.y += p.v * dt;
-
         ctx.strokeStyle = `rgba(108,132,168,${0.12 + p.z * 0.3})`;
         ctx.lineWidth = 0.6 + p.z * 0.9;
         ctx.beginPath();
@@ -96,17 +118,21 @@
         ctx.stroke();
       } else {
         p.phase += dt * 1.1;
+        p.rot += p.spin * dt;
         p.x += (Math.sin(p.phase) * p.sway + gust * 26) * dt;
         p.y += p.v * dt;
-
-        ctx.fillStyle = `rgba(138,158,190,${0.2 + p.z * 0.38})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.len, 0, Math.PI * 2);
-        ctx.fill();
+        const a = 0.28 + p.z * 0.46;
+        if (p.z > 0.5) {
+          flake(p.x, p.y, p.len, p.rot, a, 0.7 + p.z * 0.7);
+        } else {
+          ctx.fillStyle = `rgba(126,150,188,${a})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.len * 0.55, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
-      // 出界回收
-      if (p.y > h + 30) Object.assign(p, make(false));
+      if (p.y > h + 40) Object.assign(p, make(false));
       if (p.x < -60) p.x = w + 40;
       else if (p.x > w + 60) p.x = -40;
     }
@@ -114,85 +140,139 @@
     raf = requestAnimationFrame(frame);
   }
 
-  function start() {
-    if (raf || mode === 'off' || reduced) return;
+  function startDraw() {
+    if (raf || active === 'off' || reduced) return;
     last = performance.now();
     raf = requestAnimationFrame(frame);
   }
+  function stopDraw() { cancelAnimationFrame(raf); raf = 0; }
 
-  function stop() {
-    cancelAnimationFrame(raf);
-    raf = 0;
-    ctx.clearRect(0, 0, w, h);
+  /* ── 环境音：滤波噪声实时合成，无音频文件 ── */
+  const VOL: Record<Active, number> = { off: 0.018, rain: 0.035, snow: 0.022 };
+
+  let ac: AudioContext | null = null;
+  let master: GainNode | null = null;
+  let on = false;
+
+  function noiseBuffer(c: AudioContext, sec: number) {
+    const buf = c.createBuffer(1, c.sampleRate * sec, c.sampleRate);
+    const d = buf.getChannelData(0);
+    // 粉噪声（Voss 近似）—— 比纯白噪声柔和，不刺耳
+    let b0 = 0, b1 = 0, b2 = 0;
+    for (let i = 0; i < d.length; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99765 * b0 + white * 0.099046;
+      b1 = 0.963 * b1 + white * 0.2965164;
+      b2 = 0.57 * b2 + white * 1.0526913;
+      d[i] = (b0 + b1 + b2 + white * 0.1848) * 0.12;
+    }
+    return buf;
   }
 
-  function setMode(next: Mode) {
-    mode = next;
-    localStorage.setItem(KEY, next);
-    document.querySelectorAll<HTMLElement>('.wswitch button').forEach((b) => {
-      b.classList.toggle('on', b.dataset.mode === next);
-    });
-    stop();
-    if (next === 'off') return;
-    spawn();
-    start();
+  function buildAudio() {
+    ac = new AudioContext();
+    const src = ac.createBufferSource();
+    src.buffer = noiseBuffer(ac, 6);
+    src.loop = true;
+
+    const hp = ac.createBiquadFilter();
+    const lp = ac.createBiquadFilter();
+    hp.type = 'highpass';
+    lp.type = 'lowpass';
+
+    if (active === 'rain') {
+      hp.frequency.value = 420; lp.frequency.value = 5200;   // 沙沙的雨
+    } else if (active === 'snow') {
+      hp.frequency.value = 90;  lp.frequency.value = 700;    // 低沉的风
+    } else {
+      hp.frequency.value = 60;  lp.frequency.value = 380;    // 极轻的环境底噪
+    }
+
+    // 缓慢起伏，避免听起来像一条死噪声
+    const lfo = ac.createOscillator();
+    const lfoGain = ac.createGain();
+    lfo.frequency.value = active === 'rain' ? 0.08 : 0.05;
+    lfoGain.gain.value = active === 'rain' ? 0.3 : 0.45;
+
+    const swell = ac.createGain();
+    swell.gain.value = 0.7;
+    lfo.connect(lfoGain).connect(swell.gain);
+
+    master = ac.createGain();
+    master.gain.value = 0;
+
+    src.connect(hp).connect(lp).connect(swell).connect(master).connect(ac.destination);
+    src.start();
+    lfo.start();
   }
 
-  document.querySelectorAll<HTMLElement>('.wswitch button').forEach((b) => {
-    b.addEventListener('click', () => setMode(b.dataset.mode as Mode));
-  });
+  function fade(to: number, sec = 1.4) {
+    if (!ac || !master) return;
+    const t = ac.currentTime;
+    master.gain.cancelScheduledValues(t);
+    master.gain.setValueAtTime(master.gain.value, t);
+    master.gain.linearRampToValueAtTime(to, t + sec);
+  }
 
-  // 标签页不可见时停掉，别空烧 CPU
+  async function setSound(next: boolean) {
+    on = next;
+    btn.setAttribute('aria-pressed', String(on));
+    btn.classList.toggle('on', on);
+    localStorage.setItem(SOUND, on ? '1' : '0');
+
+    if (on) {
+      if (!ac) buildAudio();
+      await ac!.resume();
+      fade(VOL[active]);
+    } else {
+      fade(0, 0.6);
+    }
+  }
+
+  btn.addEventListener('click', () => setSound(!on));
+
+  // 浏览器要求先有交互才能出声：记住了「开」也要等首次点击/按键
+  if (localStorage.getItem(SOUND) === '1') {
+    const resume = () => {
+      setSound(true);
+      removeEventListener('pointerdown', resume);
+      removeEventListener('keydown', resume);
+    };
+    addEventListener('pointerdown', resume, { once: true });
+    addEventListener('keydown', resume, { once: true });
+    btn.classList.add('pending');
+  }
+
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stop();
-    else start();
+    if (document.hidden) { stopDraw(); if (on) fade(0, 0.4); }
+    else { startDraw(); if (on) fade(VOL[active]); }
   });
 
   let rt: number;
-  addEventListener('resize', () => {
-    clearTimeout(rt);
-    rt = setTimeout(resize, 150);
-  });
+  addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 150); });
 
   resize();
-  setMode((localStorage.getItem(KEY) as Mode) ?? 'rain');
+  if (active !== 'off') { spawn(); startDraw(); }
 </script>
 
 <style>
-  #weather {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-  }
+  #weather { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 
-  .wswitch {
-    position: fixed;
-    right: 1rem;
-    bottom: 1rem;
-    z-index: 30;
-    display: flex;
-    gap: 2px;
-    padding: 3px;
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 999px;
+  .sound {
+    position: fixed; right: 1rem; bottom: 1rem; z-index: 30;
+    width: 34px; height: 34px; display: grid; place-items: center;
+    padding: 0; cursor: pointer;
+    background: #fff; color: var(--text-dim);
+    border: 1px solid var(--border); border-radius: 50%;
+    transition: color .15s, border-color .15s;
   }
-  .wswitch button {
-    font: inherit;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.7rem;
-    border: none;
-    border-radius: 999px;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: 0.15s;
-  }
-  .wswitch button:hover { color: var(--text); }
-  .wswitch button.on { background: var(--text); color: #fff; }
+  .sound:hover { color: var(--text); border-color: var(--text-dim); }
+  .sound.on { color: var(--text); }
 
-  @media (prefers-reduced-motion: reduce) {
-    #weather { display: none; }
-  }
+  /* 关闭态：斜杠可见、声波隐藏 */
+  .sound .wave1, .sound .wave2 { opacity: 0; transition: opacity .2s; }
+  .sound .slash { opacity: 1; transition: opacity .2s; }
+  .sound.on .wave1, .sound.on .wave2 { opacity: 1; }
+  .sound.on .slash { opacity: 0; }
+  .sound.pending { opacity: 0.55; }
 </style>
