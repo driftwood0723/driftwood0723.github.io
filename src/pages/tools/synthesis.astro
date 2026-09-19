@@ -1,0 +1,20 @@
+---
+import Base from '../../layouts/Base.astro';
+import SynthesisCalc from '../../components/SynthesisCalc.tsx';
+---
+
+<Base
+  title="梦幻西游合成计算"
+  description="宝石、星辉石、钟灵石等材料的合成消耗计算：需要多少底层材料、合成几次、花多少钱。"
+>
+  <h1>梦幻西游合成计算</h1>
+  <p class="lead">
+    算清楚合到目标等级要吃掉多少底层材料、合成几次、花多少钱。
+    规则取自官方公告，全程在浏览器本地计算。
+  </p>
+
+  <SynthesisCalc client:load />
+
+  <hr />
+  <p><a href="/tools">← 所有工具</a></p>
+</Base>
