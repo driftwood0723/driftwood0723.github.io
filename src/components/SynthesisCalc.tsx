@@ -65,6 +65,16 @@ export default function SynthesisCalc() {
     [chain, level, unitPrice, staminaPrice, cnyPer30M]
   );
 
+  // 每一级单独算一遍：合成 1 颗该级，从头到尾要吃多少
+  const ladder = useMemo(
+    () =>
+      Array.from({ length: chain.maxLevel - 1 }, (_, i) => {
+        const lv = i + 2;
+        return { lv, ...calculate({ chain, targetLevel: lv, unitPrice, staminaPrice, cnyPer30M }) };
+      }),
+    [chain, unitPrice, staminaPrice, cnyPer30M]
+  );
+
   return (
     <div className="calc">
       {/* ── 材料 ── */}
@@ -156,54 +166,46 @@ export default function SynthesisCalc() {
         )}
       </div>
 
-      {/* ── 明细 ── */}
+      {/* ── 各级换算 ── */}
       <p className="tip">
-        「需要」拆成两列：被高一级<b>当原料</b>吃掉，或被更高级的「必定成功」
-        合成<b>当附加</b>索要 —— 只有目标那一行例外，它那一个就是你自己要的。
-        最后一列则是反过来看：这一级自己怎么合出来，<b>粗体是主料</b>。
+        每一行都是独立的：合成 <b>1 颗</b>该等级，从 1 级开始一路合上来的总消耗。
       </p>
       <div className="tablewrap">
         <table>
           <thead>
             <tr>
               <th>等级</th>
-              <th className="n">需要</th>
-              <th className="n sub">其中·当原料</th>
-              <th className="n sub">其中·当附加</th>
-              <th className="n">需合成</th>
-              <th className="n">体力</th>
               <th>合成配方</th>
+              <th className="n">需 1 级{chain.unit === '颗' ? '宝石' : '材料'}</th>
+              <th className="n">合成次数</th>
+              <th className="n">体力</th>
+              <th className="n">花费</th>
             </tr>
           </thead>
           <tbody>
-            {result.rows.map((r) => {
-              const tier = chain.tiers[r.level - 1];
+            {ladder.map((row) => {
+              const tier = chain.tiers[row.lv - 1];
               const recipe = describeRecipe(tier);
               return (
-                <tr key={r.level} className={r.shortfall > 0 ? 'base' : undefined}>
-                  <td><b>{r.level} 级</b></td>
-                  <td className="n">
-                    {formatCount(r.needed)}
-                    {r.level === level && <em className="tgt">目标</em>}
+                <tr key={row.lv} className={row.lv === level ? 'cur' : undefined}>
+                  <td>
+                    <b>{row.lv} 级</b>
+                    {row.lv === level && <em className="tgt">目标</em>}
                   </td>
-                  <td className="n dim">{r.asMaterial ? formatCount(r.asMaterial) : '—'}</td>
-                  <td className="n dim">{r.asExtra ? formatCount(r.asExtra) : '—'}</td>
-                  <td className="n">
-                    {r.shortfall > 0
-                      ? <span className="tagbase">自备 {formatCount(r.shortfall)}</span>
-                      : formatCount(r.toSynthesize)}
-                  </td>
-                  <td className="n dim">{r.stamina ? formatCount(r.stamina) : '—'}</td>
                   <td className="sm recipe">
-                    {recipe ? (
+                    {recipe && (
                       <>
                         <b>{recipe.main}</b>
                         {recipe.ex && <span className="plus"> + {recipe.ex}</span>}
                       </>
-                    ) : (
-                      <span className="dim">底层，需自备</span>
                     )}
                   </td>
+                  <td className="n strong">{formatCount(row.baseNeeded)}</td>
+                  <td className="n dim">{formatCount(row.totalSyntheses)}</td>
+                  <td className="n dim">
+                    {chain.staminaKnown ? formatCount(row.totalStamina) : '—'}
+                  </td>
+                  <td className="n dim">{formatBig(row.totalCost)}</td>
                 </tr>
               );
             })}
@@ -301,7 +303,9 @@ export default function SynthesisCalc() {
         }
         tbody td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
         tbody tr:last-child td { border-bottom: none; }
-        tbody tr.base { background: var(--bg-soft); }
+        tbody tr.cur { background: var(--bg-soft); }
+        tbody tr.cur td:first-child { box-shadow: inset 2px 0 0 var(--text); }
+        .strong { font-weight: 600; }
         .n { text-align: right; font-variant-numeric: tabular-nums; }
         th.n { text-align: right; }
         .dim { color: var(--text-dim); }
