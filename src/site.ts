@@ -2,7 +2,7 @@
 export const site = {
   title: '我的站点',
   // 首页大标题下的一句话
-  tagline: '写点东西，放点作品，顺手做些小工具。',
+  tagline: '写点东西，顺手做些小工具。',
   author: '你的名字',
   email: '',
   github: '',
@@ -13,6 +13,5 @@ export const site = {
 export const nav = [
   { href: '/', label: '首页' },
   { href: '/blog', label: '写作' },
-  { href: '/projects', label: '作品' },
   { href: '/tools', label: '工具' },
 ] as const;

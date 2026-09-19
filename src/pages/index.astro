@@ -2,7 +2,6 @@
 import Base from '../layouts/Base.astro';
 import { site } from '../site';
 import { tools } from '../tools';
-import { projects } from '../projects';
 import { getCollection } from 'astro:content';
 
 const allPosts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
@@ -12,7 +11,6 @@ const recent = allPosts.slice(0, 3);
 
 const sections = [
   { href: '/blog', title: '写作', desc: '踩过的坑，和想明白的事。', count: allPosts.length, unit: '篇' },
-  { href: '/projects', title: '作品', desc: '做过的东西，有的还在跑。', count: projects.length, unit: '个' },
   { href: '/tools', title: '工具', desc: '打开就能用，数据不上传。', count: tools.length, unit: '个' },
 ];
 
@@ -25,8 +23,8 @@ const fmt = (d: Date) =>
     <h1>{site.title}</h1>
     <p class="hero-lead">{site.tagline}</p>
     <p class="hero-sub">
-      桌面上堆了一堆项目，都能跑，也都没人看见 —— 包括我自己。
-      这里是它们的落脚点，顺便放些自己在用的小工具。
+      写下来的东西才算真的想明白了，所以有了这里。
+      顺便放些自己天天在用的小工具，打开就能用。
     </p>
     <div class="actions">
       <a class="btn btn-primary" href="/blog">读点东西 →</a>
@@ -34,7 +32,7 @@ const fmt = (d: Date) =>
     </div>
   </section>
 
-  <ul class="cards">
+  <ul class="cards two">
     {
       sections.map((s) => (
         <li>
@@ -71,6 +69,9 @@ const fmt = (d: Date) =>
   }
 
   <style>
+    .cards.two { grid-template-columns: 1fr; }
+    @media (min-width: 640px) { .cards.two { grid-template-columns: repeat(2, 1fr); } }
+
     .hero { padding: 1.5rem 0 3rem; }
     .hero h1 { font-size: clamp(2.2rem, 5vw, 3rem); margin: 0 0 0.8rem; }
     .hero-lead { font-size: 1.15rem; margin: 0 0 0.8rem; }
