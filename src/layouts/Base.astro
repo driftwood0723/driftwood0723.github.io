@@ -5,17 +5,15 @@ import { site, nav } from '../site';
 interface Props {
   title?: string;
   description?: string;
-  /** 卡片列表类页面开启，容器变宽 */
-  wide?: boolean;
 }
 
-const { title, description = site.tagline, wide = false } = Astro.props;
+const { title, description = site.tagline } = Astro.props;
 const pageTitle = title ? `${title} · ${site.title}` : site.title;
 const path = Astro.url.pathname;
 ---
 
 <!doctype html>
-<html lang="zh-CN" class={wide ? 'wide' : undefined}>
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

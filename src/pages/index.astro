@@ -1,41 +1,185 @@
 ---
 import Base from '../layouts/Base.astro';
 import { site } from '../site';
+import { tools } from '../tools';
+import { projects } from '../projects';
 import { getCollection } from 'astro:content';
 
-const posts = (await getCollection('blog', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 3);
+const allPosts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const recent = allPosts.slice(0, 3);
+
+const sections = [
+  {
+    href: '/blog',
+    title: '写作',
+    en: 'WRITING',
+    desc: '踩过的坑，和想明白的事。写下来才算真的想明白。',
+    count: allPosts.length,
+    unit: '篇',
+  },
+  {
+    href: '/projects',
+    title: '作品',
+    en: 'WORK',
+    desc: '做过的东西，有的还在跑，有的已经停了。',
+    count: projects.length,
+    unit: '个',
+  },
+  {
+    href: '/tools',
+    title: '工具',
+    en: 'TOOLS',
+    desc: '每次都要重新查的东西，做成了网页版，打开就能用。',
+    count: tools.length,
+    unit: '个',
+  },
+];
 
 const fmt = (d: Date) =>
   d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
 ---
 
 <Base>
-  <div class="badge reveal"><span class="dot"></span> 正在更新中</div>
+  <section class="hero">
+    <div class="badge reveal"><span class="dot"></span> 正在更新中</div>
 
-  <h1 class="reveal d1"><span class="grad">{site.title}</span></h1>
-  <p class="lead reveal d2">{site.tagline}</p>
+    <h1 class="reveal d1">
+      <span class="grad">{site.title}</span>
+    </h1>
 
-  <p class="reveal d3">
-    这里放我写的东西，以及一些自己在用的小工具。
-    大部分内容是给未来的自己看的，如果碰巧对你也有用，那更好。
-  </p>
+    <p class="hero-lead reveal d2">{site.tagline}</p>
+
+    <p class="hero-sub reveal d3">
+      桌面上堆了一堆项目，都能跑，也都没人看见 —— 包括我自己。
+      这里是它们的落脚点，顺便放些自己天天在用的小工具。
+    </p>
+
+    <div class="actions reveal d4">
+      <a class="btn btn-primary" href="/blog">读点东西 <span class="ar">→</span></a>
+      <a class="btn btn-ghost" href="/tools">看看工具</a>
+    </div>
+  </section>
+
+  <section class="entries">
+    {
+      sections.map((s, i) => (
+        <a class={`card entry reveal d${i + 4}`} href={s.href}>
+          <div class="entry-top">
+            <span class="en">{s.en}</span>
+            <span class="count">
+              {s.count}
+              <i>{s.unit}</i>
+            </span>
+          </div>
+          <h3>{s.title}</h3>
+          <p>{s.desc}</p>
+          <span class="go">进入 →</span>
+        </a>
+      ))
+    }
+  </section>
 
   {
-    posts.length > 0 && (
-      <div class="reveal d4">
-        <h2>最近写的</h2>
+    recent.length > 0 && (
+      <section class="reveal d6">
+        <div class="sec-head">
+          <h2>最近写的</h2>
+          <a href="/blog" class="more">全部 →</a>
+        </div>
         <ul class="post-list">
-          {posts.map((post) => (
+          {recent.map((post) => (
             <li>
               <a href={`/blog/${post.id}/`}>{post.data.title}</a>
               <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time>
             </li>
           ))}
         </ul>
-        <p style="margin-top:1.75rem"><a href="/blog">全部文章 →</a></p>
-      </div>
+      </section>
     )
   }
+
+  <style>
+    .hero { padding: clamp(1.5rem, 6vw, 4.5rem) 0 clamp(2.5rem, 6vw, 4rem); }
+
+    .hero h1 {
+      font-size: clamp(2.8rem, 9vw, 5.2rem);
+      line-height: 1.02;
+      margin: 0 0 1.1rem;
+      letter-spacing: -0.04em;
+      font-weight: 750;
+    }
+    .hero-lead {
+      font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+      color: var(--text);
+      margin: 0 0 0.9rem;
+      font-weight: 450;
+    }
+    .hero-sub {
+      font-size: 0.98rem;
+      color: var(--text-muted);
+      max-width: 52ch;
+      margin: 0 0 2.2rem;
+    }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.7rem 1.35rem; border-radius: 999px;
+      font-size: 0.93rem; font-weight: 500; text-decoration: none;
+      transition: transform 0.22s var(--ease), box-shadow 0.22s, border-color 0.22s;
+    }
+    .btn-primary {
+      color: #0b0916;
+      background: linear-gradient(110deg, #c4b5fd, #a5b4fc 45%, #7dd3fc);
+      box-shadow: 0 6px 24px rgba(167, 139, 250, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 34px rgba(167, 139, 250, 0.45);
+    }
+    .btn-primary .ar { transition: transform 0.22s var(--ease); }
+    .btn-primary:hover .ar { transform: translateX(4px); }
+    .btn-ghost {
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+    }
+    .btn-ghost:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+
+    .entries {
+      display: grid; gap: 1.1rem; grid-template-columns: 1fr;
+      margin: 0 0 4rem;
+    }
+    @media (min-width: 760px) { .entries { grid-template-columns: repeat(3, 1fr); } }
+
+    .entry-top {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 1.1rem;
+    }
+    .en {
+      font-family: var(--mono); font-size: 0.68rem;
+      letter-spacing: 0.18em; color: var(--text-dim);
+    }
+    .count {
+      font-size: 1.5rem; font-weight: 650; color: var(--text);
+      font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+    }
+    .count i {
+      font-style: normal; font-size: 0.72rem; font-weight: 400;
+      color: var(--text-dim); margin-left: 0.15rem;
+    }
+
+    .sec-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.6rem;
+    }
+    .sec-head h2 { margin: 0; font-size: 1.3rem; }
+    .more { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; }
+    .more:hover { color: var(--accent); }
+    .post-list { margin-top: 0.5rem; }
+  </style>
 </Base>
