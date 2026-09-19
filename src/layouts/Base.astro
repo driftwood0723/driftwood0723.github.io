@@ -5,18 +5,21 @@ import { site, nav } from '../site';
 interface Props {
   title?: string;
   description?: string;
+  /** 卡片列表类页面开启，容器变宽 */
+  wide?: boolean;
 }
 
-const { title, description = site.tagline } = Astro.props;
+const { title, description = site.tagline, wide = false } = Astro.props;
 const pageTitle = title ? `${title} · ${site.title}` : site.title;
 const path = Astro.url.pathname;
 ---
 
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" class={wide ? 'wide' : undefined}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#08070f" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
@@ -25,9 +28,15 @@ const path = Astro.url.pathname;
     <meta name="generator" content={Astro.generator} />
   </head>
   <body>
+    <!-- 背景层 -->
+    <div class="aurora" aria-hidden="true">
+      <span class="b1"></span><span class="b2"></span><span class="b3"></span>
+    </div>
+    <div class="grid-bg" aria-hidden="true"></div>
+
     <header>
       <nav>
-        <a href="/" class="brand">{site.title}</a>
+        <a href="/" class="brand"><span class="grad">{site.title}</span></a>
         <ul>
           {
             nav.slice(1).map((item) => (
@@ -53,54 +62,44 @@ const path = Astro.url.pathname;
 
     <style>
       header {
+        position: sticky; top: 0; z-index: 20;
         border-bottom: 1px solid var(--border);
-        background: color-mix(in srgb, var(--bg) 85%, transparent);
-        backdrop-filter: blur(8px);
-        position: sticky;
-        top: 0;
-        z-index: 10;
+        background: rgba(8, 7, 15, 0.6);
+        backdrop-filter: blur(16px) saturate(140%);
       }
       nav {
-        max-width: var(--measure);
-        margin: 0 auto;
-        padding: 0.85rem 1.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
+        max-width: var(--measure); margin: 0 auto;
+        padding: 0.9rem 1.5rem;
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
       }
-      .brand {
-        font-weight: 650;
-        color: var(--text);
-        text-decoration: none;
-        letter-spacing: -0.01em;
-      }
+      .brand { font-weight: 700; font-size: 1.02rem; text-decoration: none;
+               letter-spacing: -0.02em; }
       nav ul {
-        display: flex;
-        gap: 1.25rem;
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        font-size: 0.925rem;
+        display: flex; gap: 1.5rem; list-style: none; margin: 0; padding: 0;
+        font-size: 0.93rem;
       }
       nav ul a {
-        color: var(--text-muted);
-        text-decoration: none;
+        position: relative; color: var(--text-muted); text-decoration: none;
+        transition: color 0.18s;
+      }
+      nav ul a::after {
+        content: ''; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        transform: scaleX(0); transform-origin: left;
+        transition: transform 0.25s var(--ease);
       }
       nav ul a:hover { color: var(--text); }
-      nav ul a[aria-current='page'] { color: var(--accent); font-weight: 550; }
+      nav ul a:hover::after { transform: scaleX(1); }
+      nav ul a[aria-current='page'] { color: var(--text); }
+      nav ul a[aria-current='page']::after { transform: scaleX(1); }
 
       footer {
+        position: relative; z-index: 2;
         border-top: 1px solid var(--border);
-        padding: 1.5rem;
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        max-width: var(--measure);
-        margin: 0 auto;
-        width: 100%;
-        font-size: 0.85rem;
-        color: var(--text-muted);
+        padding: 1.6rem 1.5rem;
+        display: flex; justify-content: space-between; gap: 1rem;
+        max-width: var(--measure); margin: 0 auto; width: 100%;
+        font-size: 0.83rem; color: var(--text-dim);
       }
     </style>
   </body>

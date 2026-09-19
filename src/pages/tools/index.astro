@@ -3,8 +3,8 @@ import Base from '../../layouts/Base.astro';
 import { tools } from '../../tools';
 ---
 
-<Base title="工具" description="一些自己在用的网页小工具。">
-  <h1>工具</h1>
+<Base title="工具" description="一些自己在用的网页小工具。" wide>
+  <h1><span class="grad">工具</span></h1>
   <p class="lead">那些每次都要重新查一遍的东西，做成了网页版。全部在浏览器本地运行，不上传任何数据。</p>
 
   <ul class="cards">
@@ -14,6 +14,7 @@ import { tools } from '../../tools';
           <a class="card" href={t.href}>
             <h3>{t.name}</h3>
             <p>{t.description}</p>
+            <span class="go">打开 →</span>
           </a>
         </li>
       ))

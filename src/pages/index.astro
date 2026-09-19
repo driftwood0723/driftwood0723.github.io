@@ -7,21 +7,24 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
   .slice(0, 3);
 
-const fmt = (d: Date) => d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+const fmt = (d: Date) =>
+  d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
 ---
 
 <Base>
-  <h1>{site.title}</h1>
-  <p class="lead">{site.tagline}</p>
+  <div class="badge reveal"><span class="dot"></span> 正在更新中</div>
 
-  <p>
-    这里放我写的东西、做过的项目，以及一些自己在用的小工具。
+  <h1 class="reveal d1"><span class="grad">{site.title}</span></h1>
+  <p class="lead reveal d2">{site.tagline}</p>
+
+  <p class="reveal d3">
+    这里放我写的东西，以及一些自己在用的小工具。
     大部分内容是给未来的自己看的，如果碰巧对你也有用，那更好。
   </p>
 
   {
     posts.length > 0 && (
-      <>
+      <div class="reveal d4">
         <h2>最近写的</h2>
         <ul class="post-list">
           {posts.map((post) => (
@@ -31,8 +34,8 @@ const fmt = (d: Date) => d.toLocaleDateString('zh-CN', { year: 'numeric', month:
             </li>
           ))}
         </ul>
-        <p style="margin-top:1.5rem"><a href="/blog">全部文章 →</a></p>
-      </>
+        <p style="margin-top:1.75rem"><a href="/blog">全部文章 →</a></p>
+      </div>
     )
   }
 </Base>
