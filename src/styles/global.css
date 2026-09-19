@@ -145,22 +145,35 @@ blockquote {
 @media (min-width: 900px) { .cards { grid-template-columns: repeat(3, 1fr) } }
 
 .card {
-  position: relative; display: flex; flex-direction: column; height: 100%;
+  position: relative;
+  isolation: isolate;               /* 关住负层级，光晕不会穿到页面背景 */
+  display: flex; flex-direction: column; height: 100%;
   padding: 1.5rem 1.35rem 1.3rem;
-  background: var(--surface-solid);
-  backdrop-filter: blur(20px);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   color: inherit; text-decoration: none;
   transition: transform .28s var(--ease), border-color .28s;
 }
-.card::after {
-  content: ''; position: absolute; inset: -1px; border-radius: var(--radius-lg);
-  background: linear-gradient(140deg, var(--accent), var(--accent-2));
-  opacity: 0; filter: blur(16px); z-index: -1; transition: opacity .28s;
+/* 不透明玻璃底 —— 把光晕挡在卡片外，本体颜色 hover 时不变 */
+.card::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit;
+  background: rgba(16, 14, 28, 0.86);
+  backdrop-filter: blur(20px);
 }
-a.card:hover { transform: translateY(-6px); border-color: var(--border-strong); }
-a.card:hover::after { opacity: .45; }
+/* 外围光晕：只有溢出卡片边缘的模糊部分可见 */
+.card::after {
+  content: ''; position: absolute; inset: 0; z-index: -2;
+  border-radius: inherit;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  opacity: 0; filter: blur(20px); transform: scale(.96);
+  transition: opacity .3s, transform .3s var(--ease);
+}
+/* 卡片是整块链接，不该被全局 a:hover 的文字色染上 */
+a.card, a.card:hover { color: inherit; }
+a.card:hover { transform: translateY(-5px); border-color: var(--border-strong); }
+a.card:hover::after { opacity: .3; transform: scale(1.015); }
 a.card:hover .go { transform: translateX(5px); }
 
 .card h3 { margin: 0 0 .45rem; font-size: 1.1rem; font-weight: 600; }
