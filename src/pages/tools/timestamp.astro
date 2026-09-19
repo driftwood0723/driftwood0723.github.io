@@ -1,0 +1,14 @@
+---
+import Base from '../../layouts/Base.astro';
+import TimestampTool from '../../components/TimestampTool.tsx';
+---
+
+<Base title="时间戳转换" description="Unix 时间戳和日期互转。">
+  <h1>时间戳转换</h1>
+  <p class="lead">秒和毫秒自动识别，全程在你的浏览器里算。</p>
+
+  <TimestampTool client:load />
+
+  <hr />
+  <p><a href="/tools">← 所有工具</a></p>
+</Base>

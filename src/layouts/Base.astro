@@ -1,0 +1,107 @@
+---
+import '../styles/global.css';
+import { site, nav } from '../site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description = site.tagline } = Astro.props;
+const pageTitle = title ? `${title} · ${site.title}` : site.title;
+const path = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="/" class="brand">{site.title}</a>
+        <ul>
+          {
+            nav.slice(1).map((item) => (
+              <li>
+                <a href={item.href} aria-current={path.startsWith(item.href) ? 'page' : undefined}>
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer>
+      <span>© {new Date().getFullYear()} {site.author}</span>
+      {site.github && <a href={`https://github.com/${site.github}`}>GitHub</a>}
+    </footer>
+
+    <style>
+      header {
+        border-bottom: 1px solid var(--border);
+        background: color-mix(in srgb, var(--bg) 85%, transparent);
+        backdrop-filter: blur(8px);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      nav {
+        max-width: var(--measure);
+        margin: 0 auto;
+        padding: 0.85rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .brand {
+        font-weight: 650;
+        color: var(--text);
+        text-decoration: none;
+        letter-spacing: -0.01em;
+      }
+      nav ul {
+        display: flex;
+        gap: 1.25rem;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        font-size: 0.925rem;
+      }
+      nav ul a {
+        color: var(--text-muted);
+        text-decoration: none;
+      }
+      nav ul a:hover { color: var(--text); }
+      nav ul a[aria-current='page'] { color: var(--accent); font-weight: 550; }
+
+      footer {
+        border-top: 1px solid var(--border);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        max-width: var(--measure);
+        margin: 0 auto;
+        width: 100%;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+    </style>
+  </body>
+</html>
