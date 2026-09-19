@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import { site, nav } from '../site';
-import ThemePicker from '../components/ThemePicker.astro';
+import Weather from '../components/Weather.astro';
 
 interface Props {
   title?: string;
@@ -18,7 +18,7 @@ const path = Astro.url.pathname;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#fcfcfb" />
+    <meta name="theme-color" content="#ffffff" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
@@ -27,15 +27,11 @@ const path = Astro.url.pathname;
     <meta name="generator" content={Astro.generator} />
   </head>
   <body>
-    <!-- 背景层 -->
-    <div class="aurora" aria-hidden="true">
-      <span class="b1"></span><span class="b2"></span><span class="b3"></span>
-    </div>
-    <div class="grid-bg" aria-hidden="true"></div>
+    <Weather />
 
     <header>
       <nav>
-        <a href="/" class="brand"><span class="grad">{site.title}</span></a>
+        <a href="/" class="brand">{site.title}</a>
         <ul>
           {
             nav.slice(1).map((item) => (
@@ -54,8 +50,6 @@ const path = Astro.url.pathname;
       <slot />
     </main>
 
-    <ThemePicker />
-
     <footer>
       <span>© {new Date().getFullYear()} {site.author}</span>
       {site.github && <a href={`https://github.com/${site.github}`}>GitHub</a>}
@@ -63,44 +57,58 @@ const path = Astro.url.pathname;
 
     <style>
       header {
-        position: sticky; top: 0; z-index: 20;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #fff;
         border-bottom: 1px solid var(--border);
-        background: rgba(252, 252, 251, 0.72);
-        backdrop-filter: blur(16px) saturate(180%);
       }
       nav {
-        max-width: var(--measure); margin: 0 auto;
+        max-width: var(--measure);
+        margin: 0 auto;
         padding: 0.9rem 1.5rem;
-        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
       }
-      .brand { font-weight: 700; font-size: 1.02rem; text-decoration: none;
-               letter-spacing: -0.02em; }
+      .brand {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--text);
+        text-decoration: none;
+        letter-spacing: -0.02em;
+      }
       nav ul {
-        display: flex; gap: 1.5rem; list-style: none; margin: 0; padding: 0;
-        font-size: 0.93rem;
+        display: flex;
+        gap: 1.5rem;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        font-size: 0.92rem;
       }
       nav ul a {
-        position: relative; color: var(--text-muted); text-decoration: none;
-        transition: color 0.18s;
-      }
-      nav ul a::after {
-        content: ''; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px;
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
-        transform: scaleX(0); transform-origin: left;
-        transition: transform 0.25s var(--ease);
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: color 0.15s;
       }
       nav ul a:hover { color: var(--text); }
-      nav ul a:hover::after { transform: scaleX(1); }
       nav ul a[aria-current='page'] { color: var(--text); }
-      nav ul a[aria-current='page']::after { transform: scaleX(1); }
 
       footer {
-        position: relative; z-index: 2;
+        position: relative;
+        z-index: 1;
+        background: #fff;
         border-top: 1px solid var(--border);
-        padding: 1.6rem 1.5rem;
-        display: flex; justify-content: space-between; gap: 1rem;
-        max-width: var(--measure); margin: 0 auto; width: 100%;
-        font-size: 0.83rem; color: var(--text-dim);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        max-width: var(--measure);
+        margin: 0 auto;
+        width: 100%;
+        font-size: 0.82rem;
+        color: var(--text-dim);
       }
     </style>
   </body>

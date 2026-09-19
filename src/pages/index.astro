@@ -11,30 +11,9 @@ const allPosts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
 const recent = allPosts.slice(0, 3);
 
 const sections = [
-  {
-    href: '/blog',
-    title: '写作',
-    en: 'WRITING',
-    desc: '踩过的坑，和想明白的事。写下来才算真的想明白。',
-    count: allPosts.length,
-    unit: '篇',
-  },
-  {
-    href: '/projects',
-    title: '作品',
-    en: 'WORK',
-    desc: '做过的东西，有的还在跑，有的已经停了。',
-    count: projects.length,
-    unit: '个',
-  },
-  {
-    href: '/tools',
-    title: '工具',
-    en: 'TOOLS',
-    desc: '每次都要重新查的东西，做成了网页版，打开就能用。',
-    count: tools.length,
-    unit: '个',
-  },
+  { href: '/blog', title: '写作', desc: '踩过的坑，和想明白的事。', count: allPosts.length, unit: '篇' },
+  { href: '/projects', title: '作品', desc: '做过的东西，有的还在跑。', count: projects.length, unit: '个' },
+  { href: '/tools', title: '工具', desc: '打开就能用，数据不上传。', count: tools.length, unit: '个' },
 ];
 
 const fmt = (d: Date) =>
@@ -43,47 +22,38 @@ const fmt = (d: Date) =>
 
 <Base>
   <section class="hero">
-    <div class="badge reveal"><span class="dot"></span> 正在更新中</div>
-
-    <h1 class="reveal d1">
-      <span class="grad">{site.title}</span>
-    </h1>
-
-    <p class="hero-lead reveal d2">{site.tagline}</p>
-
-    <p class="hero-sub reveal d3">
+    <h1>{site.title}</h1>
+    <p class="hero-lead">{site.tagline}</p>
+    <p class="hero-sub">
       桌面上堆了一堆项目，都能跑，也都没人看见 —— 包括我自己。
-      这里是它们的落脚点，顺便放些自己天天在用的小工具。
+      这里是它们的落脚点，顺便放些自己在用的小工具。
     </p>
-
-    <div class="actions reveal d4">
-      <a class="btn btn-primary" href="/blog">读点东西 <span class="ar">→</span></a>
+    <div class="actions">
+      <a class="btn btn-primary" href="/blog">读点东西 →</a>
       <a class="btn btn-ghost" href="/tools">看看工具</a>
     </div>
   </section>
 
-  <section class="entries">
+  <ul class="cards">
     {
-      sections.map((s, i) => (
-        <a class={`card entry reveal d${i + 4}`} href={s.href}>
-          <div class="entry-top">
-            <span class="en">{s.en}</span>
-            <span class="count">
-              {s.count}
-              <i>{s.unit}</i>
-            </span>
-          </div>
-          <h3>{s.title}</h3>
-          <p>{s.desc}</p>
-          <span class="go">进入 →</span>
-        </a>
+      sections.map((s) => (
+        <li>
+          <a class="card" href={s.href}>
+            <div class="top">
+              <h3>{s.title}</h3>
+              <span class="count">{s.count} {s.unit}</span>
+            </div>
+            <p>{s.desc}</p>
+            <span class="go">进入 →</span>
+          </a>
+        </li>
       ))
     }
-  </section>
+  </ul>
 
   {
     recent.length > 0 && (
-      <section class="reveal d6">
+      <section>
         <div class="sec-head">
           <h2>最近写的</h2>
           <a href="/blog" class="more">全部 →</a>
@@ -101,92 +71,35 @@ const fmt = (d: Date) =>
   }
 
   <style>
-    .hero { padding: clamp(1.5rem, 6vw, 4.5rem) 0 clamp(2.5rem, 6vw, 4rem); }
+    .hero { padding: 1.5rem 0 3rem; }
+    .hero h1 { font-size: clamp(2.2rem, 5vw, 3rem); margin: 0 0 0.8rem; }
+    .hero-lead { font-size: 1.15rem; margin: 0 0 0.8rem; }
+    .hero-sub { font-size: 0.95rem; color: var(--text-muted); max-width: 52ch; margin: 0 0 2rem; }
 
-    .hero h1 {
-      font-size: clamp(2.8rem, 9vw, 5.2rem);
-      line-height: 1.02;
-      margin: 0 0 1.1rem;
-      letter-spacing: -0.04em;
-      font-weight: 750;
-    }
-    .hero-lead {
-      font-size: clamp(1.1rem, 2.2vw, 1.4rem);
-      color: var(--text);
-      margin: 0 0 0.9rem;
-      font-weight: 450;
-    }
-    .hero-sub {
-      font-size: 0.98rem;
-      color: var(--text-muted);
-      max-width: 52ch;
-      margin: 0 0 2.2rem;
-    }
-
-    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
-
+    .actions { display: flex; flex-wrap: wrap; gap: 0.7rem; }
     .btn {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      padding: 0.7rem 1.35rem; border-radius: 999px;
-      font-size: 0.93rem; font-weight: 500; text-decoration: none;
-      transition: transform 0.22s var(--ease), box-shadow 0.22s, border-color 0.22s;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.6rem 1.2rem; border-radius: 8px;
+      font-size: 0.92rem; text-decoration: none;
+      border: 1px solid transparent; transition: 0.15s;
     }
-    .btn-primary {
-      color: #fff;
-      background: var(--grad);
-      background-size: 160% auto;
-      box-shadow: 0 4px 14px rgba(70, 50, 190, 0.22);
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      background-position: 100% center;
-      box-shadow: 0 8px 26px rgba(70, 50, 190, 0.32);
-    }
-    .btn-primary .ar { transition: transform 0.22s var(--ease); }
-    .btn-primary, .btn-primary:hover { color: #fff; }
-    .btn-primary:hover .ar { transform: translateX(4px); }
-    .btn-ghost {
-      color: var(--text);
-      background: var(--surface-solid);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-sm);
-    }
-    .btn-ghost:hover {
-      border-color: var(--border-strong);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
-    }
+    .btn-primary { background: var(--text); color: #fff; }
+    .btn-primary:hover { background: #333; }
+    .btn-ghost { background: #fff; color: var(--text); border-color: var(--border); }
+    .btn-ghost:hover { border-color: var(--text-dim); }
 
-    .entries {
-      display: grid; gap: 1.1rem; grid-template-columns: 1fr;
-      margin: 0 0 4rem;
-    }
-    @media (min-width: 760px) { .entries { grid-template-columns: repeat(3, 1fr); } }
-
-    .entry-top {
-      display: flex; align-items: baseline; justify-content: space-between;
-      margin-bottom: 1.1rem;
-    }
-    .en {
-      font-family: var(--mono); font-size: 0.68rem;
-      letter-spacing: 0.18em; color: var(--text-dim);
-    }
-    .count {
-      font-size: 1.5rem; font-weight: 650; color: var(--text);
-      font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
-    }
-    .count i {
-      font-style: normal; font-size: 0.72rem; font-weight: 400;
-      color: var(--text-dim); margin-left: 0.15rem;
-    }
+    .top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+    .top h3 { margin: 0; }
+    .count { font-size: 0.78rem; color: var(--text-dim); font-family: var(--mono); }
 
     .sec-head {
       display: flex; align-items: baseline; justify-content: space-between;
-      gap: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.6rem;
+      gap: 1rem; margin-top: 3.5rem;
+      border-bottom: 1px solid var(--border); padding-bottom: 0.55rem;
     }
-    .sec-head h2 { margin: 0; font-size: 1.3rem; }
-    .more { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; }
-    .more:hover { color: var(--accent); }
-    .post-list { margin-top: 0.5rem; }
+    .sec-head h2 { margin: 0; font-size: 1.2rem; }
+    .more { font-size: 0.84rem; color: var(--text-muted); text-decoration: none; }
+    .more:hover { color: var(--text); }
+    .post-list { margin-top: 0.4rem; }
   </style>
 </Base>
