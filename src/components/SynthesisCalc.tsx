@@ -43,7 +43,8 @@ function Num({
 export default function SynthesisCalc() {
   const [chainId, setChainId] = useState<string>(DEFAULT_CHAIN_ID);
   const [targetLevel, setTargetLevel] = useState(12);
-  const [unitPrice, setUnitPrice] = useState(20_000);
+  const [unitPriceWan, setUnitPriceWan] = useState(2);
+  const unitPrice = unitPriceWan * 10_000;   // 算法内部仍用梦幻币
   const [staminaPrice, setStaminaPrice] = useState(0);
   const [cnyPer30M, setCnyPer30M] = useState(0);
 
@@ -86,8 +87,8 @@ export default function SynthesisCalc() {
           min={1} max={chain.maxLevel} hint={`最高 ${chain.maxLevel}`}
         />
         <Num
-          label="1 级单价" value={unitPrice} onChange={setUnitPrice}
-          step={1000} hint="梦幻币"
+          label="1 级单价" value={unitPriceWan} onChange={setUnitPriceWan}
+          step={0.1} hint="万"
         />
         <Num
           label="体力单价" value={staminaPrice} onChange={setStaminaPrice}
@@ -165,17 +166,22 @@ export default function SynthesisCalc() {
       )}
 
       {/* ── 明细 ── */}
+      <p className="tip">
+        每一级的需求有两个来源：被高一级<b>当原料</b>吃掉（2 颗合 1 颗），
+        或被某个更高级的「必定成功」合成<b>当附加</b>点名索要。
+        最后一列是反过来的 —— 合成这一级时你要另外交出去的东西。
+      </p>
       <div className="tablewrap">
         <table>
           <thead>
             <tr>
               <th>等级</th>
               <th className="n">需要</th>
-              <th className="n">被上级吃</th>
-              <th className="n">额外提交</th>
+              <th className="n sub">其中·当原料</th>
+              <th className="n sub">其中·当附加</th>
               <th className="n">需合成</th>
               <th className="n">体力</th>
-              <th>额外要求</th>
+              <th>合成时另需</th>
             </tr>
           </thead>
           <tbody>
@@ -283,6 +289,10 @@ export default function SynthesisCalc() {
                 padding: 0.7rem 0.9rem; background: var(--bg-soft);
                 border-left: 2px solid var(--accent); border-radius: 0 8px 8px 0; }
         .note b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+        .tip { margin: 0; font-size: 0.82rem; color: var(--text-muted); line-height: 1.7; }
+        .tip b { color: var(--text); font-weight: 550; }
+        thead th.sub { color: var(--text-dim); font-weight: 400; }
 
         .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
         table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
